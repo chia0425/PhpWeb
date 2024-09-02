@@ -1,0 +1,86 @@
+body {
+    background-color: powderblue;
+}
+
+.container{
+    display: flex; /*axis is row*/
+    /* flex-direction: column;  */
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container label{
+    
+    width: 200px;           /* Set the width of the label */
+    height: 40px;           /* Set the height of the label */
+    padding: 5px;           /* Padding inside the label */
+    font-size: 20px;        /* Set the font size */
+    color: black;            /* Set the text color */
+    text-align: center;
+}
+.val1 input , select{
+
+    background-color: pink;
+    width: 200px;           /* Set the width of the input field */
+    height: 40px;           /* Set the height of the input field */
+    padding: 5px;          /* Padding inside the input field */
+    border: 1px solid #000000; /* Border styling */
+    border-radius: 5px;     /* Rounded corners */
+    font-size: 16px;        /* Font size inside the input field */
+    box-sizing: border-box; /* Ensures padding is included in the total width and height */
+    font-size: 30px;
+}
+.calcButton {
+    padding: 10px;
+}
+.calcButton button{
+    background-color: greenyellow;
+    width: 200px;           /* Set the width of the input field */
+    height: 40px;           /* Set the height of the input field */
+    padding: 5px;          /* Padding inside the input field */
+    border: 1px solid #000000; /* Border styling */
+    border-radius: 5px;     /* Rounded corners */
+    font-size: 16px;        /* Font size inside the input field */
+    box-sizing: border-box; /* Ensures padding is included in the total width and height */
+    font-size: 15px;
+}
+
+ /* The Modal (background) */
+ .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    text-align: center;
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
