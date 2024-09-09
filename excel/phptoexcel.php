@@ -7,11 +7,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
 }
 $output = '
-<table class "table bordered = "1">
+<table border = "1">
         <tr>
-            <td>IP Add</td>
-            <td>Network Adapter</td>
-            <td>Port Status</td>
+            <th>IP Add</th>
+            <th>Network Adapter</th>
+            <th>Port Status</th>
         </tr>
         ';
 $output.= '
@@ -23,6 +23,6 @@ $output.= '
 ';
 $output .= '</table>';
 //https://www.youtube.com/watch?v=N0kYa5-IkeI&ab_channel=JaydeepSapariya
-header('Content-type: application/xls');
+header('Content-type: application/vnd.ms-excel');
 header('Content-Disposition:attachment;filename=report.xls');
 echo $output;
