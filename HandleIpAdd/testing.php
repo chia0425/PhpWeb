@@ -9,7 +9,7 @@
 <body>
     <main>
 
-        <form id = "LoginForm" action = "HandleIpAdd/handleip.inc.php" method = "post">
+        <form id = "LoginForm" action = "includes/handleip.inc.php" method = "post">
             <div class  = "container">
                 <label for = "LogIn">Log In </label>
             </div>
