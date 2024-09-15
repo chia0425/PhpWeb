@@ -42,3 +42,24 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+.image-container {
+    width: 100%; /* Make the container span the full width of the parent */
+    background-color: #fff; /* White background color */
+    padding: 5px; /* Optional: add padding around the image */
+    /* border-radius: 10px; Optional: add rounded corners to the container */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: add a subtle shadow */
+    display: flex; /* Center the image horizontally */
+    justify-content: center; /* Center the image horizontally */
+    align-items: center; /* Center the image vertically (if needed) */
+}
+
+.image-container img {
+    max-width: 100%; /* Ensure the image scales with the container width */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 10px; /* Optional: add rounded corners to the image */
+}

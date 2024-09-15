@@ -16,6 +16,9 @@
     $age = isset($_POST['age']) ? htmlspecialchars($_POST['age']) : 'Unknown';
     $occupation = isset($_POST['occupation']) ? htmlspecialchars($_POST['occupation']) : 'Unknown';
     ?>
+    <div class="image-container">
+        <img src="boa.png" alt="Server Image">
+    </div>
 
     <h2>Sample Table</h2>
     <table class = "styled-table">
