@@ -1,0 +1,44 @@
+body {
+    background-color: #3b4465; /* Match the table background color */
+    color: #fff; /* Set text color to white for visibility */
+    font-family: Arial, sans-serif; /* Optional: Change the font style */
+    margin: 0;
+    padding: 20px; /* Add padding to avoid content touching the edges */
+}
+.styled-table {
+width: 100%; /* Full width table */
+margin: 20px 0; /* Spacing around the table */
+background-color: #3b4465; /* Match the page background color */
+border-collapse: collapse; /* Remove gaps between cells */
+color: #fff; /* White text for contrast */
+box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+.styled-table th,
+.styled-table td {
+padding: 12px; /* Padding for table cells */
+text-align: left; /* Left-align text */
+border: 1px solid #cddbef; /* Light border for cells */
+}
+
+.styled-table th {
+background-color: #2e3652; /* Slightly darker background for headers */
+color: #a1b4b4; /* Lighter text for headers */
+}
+
+.styled-table tbody tr:nth-child(even) {
+background-color: #4a557d; /* Slightly lighter background for alternate rows */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+}
