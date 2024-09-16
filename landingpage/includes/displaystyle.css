@@ -63,3 +63,14 @@ body {
     height: auto; /* Maintain aspect ratio */
     border-radius: 10px; /* Optional: add rounded corners to the image */
 }
+
+#login-description {
+    width: 100%; /* Make the input full width */
+    height: 40px; /* Adjust the height */
+    padding: 10px; /* Add padding for better readability */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    border: 1px solid #cddbef; /* Border color */
+    background-color: #3b4465; /* Match background color */
+    color: #fff; /* Text color */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}

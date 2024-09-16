@@ -3,6 +3,10 @@
 *::after {
 	box-sizing: border-box;
 }
+
+
+
+
 .image-container {
     width: 100%; /* Make the container span the full width of the parent */
     background-color: #fff; /* White background color */
@@ -51,6 +55,8 @@ body {
 .form-wrapper.is-active {
 	animation: showLayer .3s ease-in forwards;
 }
+
+
 
 @keyframes showLayer {
 	50% {
@@ -314,4 +320,16 @@ body {
 	background: #fbfdff;
 	box-shadow: inset 0 0 0 2px #a7e245;
 	transform: translateX(30%);
+}
+
+#login-description {
+    width: 100%; /* Full width */
+    height: 300px; /* Increase the height */
+    padding-top: 0; /* Adjust padding to align text at the top */
+    padding-left: 10px; /* Left padding */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    border: 1px solid #cddbef; /* Border color */
+    /* background-color: #3b4465;  */
+    /* color: #fff;  */
+    box-sizing: border-box; /* Include padding and border in total width and height */
 }
