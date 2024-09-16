@@ -16,7 +16,7 @@
           2
           <span class="underline"></span>
         </button>
-        <form class="form form-login">
+        <form class="form form-login" action = "process.php" method = "post">
           <fieldset>
             <legend>Please, enter your email and password for login.</legend>
             <div class="input-block">
@@ -29,7 +29,7 @@
             </div>
             <div class="input-block">
                 <label for="login-description">Please Copy & Paste List of Server IP Address</label>
-                <input id="login-description" type = "text" required>
+                <textarea id="ip-textarea" name="ip-addresses" rows="5" cols="20"></textarea>
               </div>
           </fieldset>
           <button type="submit" class="btn-login">Submit</button>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="input-block">
                     <label for="login-description">Please Copy & Paste List of Server IP Address</label>
-                    <input id="login-description" type = "text" required>
+                    <textarea id="ip-textarea" name="ip-addresses" rows="5" cols="20"></textarea>
                   </div>
               </fieldset>
           <button type="submit" class="btn-signup">Submit</button>
