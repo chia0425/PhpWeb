@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = [
         'message' => 'Data received successfully',
     ];
-
+    $fp = fopen('filename.php' , "w");
     // Set the Content-Type header for JSON response
     header('Content-Type: application/json');
     echo json_encode($response);
@@ -41,16 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             e.preventDefault(); // Prevent the default form submission
 
             // Create an object from the form input values
-            const data = [{
-                name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
-                test:'10' , 
-            },
-            {name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
-                test:'20' , 
-            }
-            ];
+            const data = [
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    
+];
             console.log(data);
             console.log(typeof data);
             console.log(JSON.stringify(data));
@@ -73,3 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+
+<!-- [
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+    {"DCNAME" : "AUS"  , "CloudCount": "10" , "DecomCount" : "15" , "networkdevicecount" : "10" , iloport : "15" , "dh port"  : "20", "power" : "10" , "ru": "10" , "totalcount": "101"},
+
+] -->
