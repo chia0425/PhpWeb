@@ -22,7 +22,16 @@ $_SESSION['last_activity'] = time();
 ?>
 
 <script>
-// Function to notify server of user activity
+let lastUserInteraction = Date.now(); // Track the last time the user interacted
+
+// Update the `lastUserInteraction` timestamp on user activity
+["mousemove", "keydown", "click", "scroll"].forEach(event => {
+    window.addEventListener(event, () => {
+        lastUserInteraction = Date.now();
+    });
+});
+
+// Function to notify the server of user activity
 function updateSessionActivity() {
     $.ajax({
         type: "POST",
@@ -37,16 +46,17 @@ function updateSessionActivity() {
     });
 }
 
-// Notify server and tabs of activity
-function notifyActivity() {
-    localStorage.setItem("last_activity", Date.now()); // Sync across tabs
-    updateSessionActivity(); // Update session on the server
-}
+// Periodically check if the user is active
+setInterval(() => {
+    const now = Date.now();
+    const timeSinceLastInteraction = now - lastUserInteraction;
 
-// Listen for user activity
-["mousemove", "keydown", "click", "scroll"].forEach(event => {
-    window.addEventListener(event, notifyActivity);
-});
+    // Update session if the user interacted within the last minute
+    if (timeSinceLastInteraction < 60000) { // 1 minute (60,000 ms)
+        updateSessionActivity();
+        localStorage.setItem("last_activity", now); // Sync across tabs
+    }
+}, 60000); // 1-minute interval
 
 // Listen for updates in `localStorage` from other tabs
 window.addEventListener("storage", (event) => {
@@ -54,7 +64,7 @@ window.addEventListener("storage", (event) => {
         const now = Date.now();
         const lastActivity = parseInt(event.newValue, 10);
 
-        // Only update the session if activity is within timeout duration
+        // Update session if the activity is within timeout duration
         if (now - lastActivity < 30 * 60 * 1000) { // 30 minutes
             updateSessionActivity();
         }
