@@ -1,41 +1,44 @@
 <?php
 session_start();
 
-// Check if this is an AJAX request to update the session
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_session'])) {
-    $_SESSION['last_activity'] = time(); // Update last activity timestamp
-    exit; // End the script here to avoid loading the rest of the page
+// Set session timeout duration (e.g., 30 minutes)
+$timeout_duration = 30 * 60; // 30 minutes in seconds
+
+// Handle AJAX request to update session due to user activity
+if (isset($_POST['update_session']) && $_POST['update_session'] === 'true') {
+    // The session is being updated due to user activity
+    $_SESSION['last_activity'] = time(); // Update the last activity time
+    echo "Session updated successfully."; // Optional: Send a response back to the client
+    exit; // Exit to prevent further processing for AJAX request
 }
 
-// Session timeout logic
-$timeout_duration = 1800; // 30 minutes
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
-    // Destroy the session and redirect to timeout page
-    session_unset();
-    session_destroy();
-    header("Location: /timeout.php");
-    exit;
+// Check if session has expired
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout_duration)) {
+    // Mark the session as expired
+    $_SESSION['timed_out'] = true;
+    session_unset(); // Unset all session variables
+    session_destroy(); // Destroy the session
+    // Redirect to timeout page only if the user hasn't already been redirected
+    if (basename($_SERVER['PHP_SELF']) !== 'timeout.php') {
+        header("Location: timeout.php"); // Redirect to timeout page
+        exit; // Ensure no further processing happens after the redirect
+    }
+} else {
+    // Update last activity time (this will happen only when session is still valid)
+    $_SESSION['last_activity'] = time();
 }
 
-// Update session activity for standard page load
-$_SESSION['last_activity'] = time();
+// Function to check if session has timed out
+function is_session_expired() {
+    return isset($_SESSION['timed_out']) && $_SESSION['timed_out'];
+}
 ?>
-
 <script>
-let lastUserInteraction = Date.now(); // Track the last time the user interacted
-
-// Update the `lastUserInteraction` timestamp on user activity
-["mousemove", "keydown", "click", "scroll"].forEach(event => {
-    window.addEventListener(event, () => {
-        lastUserInteraction = Date.now();
-    });
-});
-
-// Function to notify the server of user activity
+// Function to update the session on the server
 function updateSessionActivity() {
     $.ajax({
         type: "POST",
-        url: window.location.href, // Send the request to the same page
+        url: window.location.href, // Send request to the current page
         data: { update_session: true }, // Send a flag to indicate session update
         success: function(response) {
             console.log("Session updated successfully.");
@@ -46,28 +49,32 @@ function updateSessionActivity() {
     });
 }
 
-// Periodically check if the user is active
-setInterval(() => {
-    const now = Date.now();
-    const timeSinceLastInteraction = now - lastUserInteraction;
+// Notify server and synchronize activity across tabs
+function notifyActivity() {
+    localStorage.setItem("last_activity", Date.now()); // Update the activity timestamp in localStorage
+    updateSessionActivity(); // Update the session on the server
+}
 
-    // Update session if the user interacted within the last minute
-    if (timeSinceLastInteraction < 60000) { // 1 minute (60,000 ms)
-        updateSessionActivity();
-        localStorage.setItem("last_activity", now); // Sync across tabs
-    }
-}, 60000); // 1-minute interval
+// Listen for user activity (e.g., mouse movement, keyboard input, clicks, scrolling)
+["mousemove", "keydown", "click", "scroll"].forEach(event => {
+    window.addEventListener(event, notifyActivity); // Track user activity
+});
 
-// Listen for updates in `localStorage` from other tabs
+// Listen for updates to `localStorage` from other tabs
 window.addEventListener("storage", (event) => {
     if (event.key === "last_activity") {
         const now = Date.now();
         const lastActivity = parseInt(event.newValue, 10);
 
-        // Update session if the activity is within timeout duration
+        // Only update the session if activity is within timeout duration (30 minutes)
         if (now - lastActivity < 30 * 60 * 1000) { // 30 minutes
-            updateSessionActivity();
+            updateSessionActivity(); // Update session activity on the server
         }
     }
 });
+
+// Periodically check and update session activity to prevent timeout
+setInterval(() => {
+    updateSessionActivity(); // Send an AJAX request every minute
+}, 60000); // Every 1 minute
 </script>
