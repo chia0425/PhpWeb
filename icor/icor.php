@@ -128,6 +128,10 @@
         .slick-header {
             border-bottom: 2px solid #007bff;
         }
+        /* Custom CSS to hide the column */
+        .slick-column-hidden {
+        display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -174,7 +178,7 @@
 
         // Column definitions for SlickGrid
         const columns = [
-            { id: "id", name: "ID", field: "id", width: 50 },
+            { id: "id", name: "ID", field: "id", width: 50, cssClass: "hidden-column" }, // Set visible to false
             { id: "project", name: "Project", field: "project", width: 150 },
             { id: "budget", name: "Budget", field: "budget", width: 100 },
             { id: "spent", name: "Spent", field: "spent", width: 100 },
@@ -192,6 +196,9 @@
 
         // Initialize SlickGrid
         let grid = new Slick.Grid("#grid", financialData, columns, options);
+        // Hide the 'id' column explicitly after the grid is initialized
+        grid.setColumns(columns.filter(col => col.id !== 'id'));
+
 
         // Search functionality
         document.getElementById("search-input").addEventListener("input", function () {
@@ -202,6 +209,7 @@
             grid.setData(filteredData);
             grid.render();
         });
+        
 
         // Download functionality
         document.getElementById("download-btn").addEventListener("click", function () {
