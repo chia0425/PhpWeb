@@ -1,0 +1,53 @@
+Sub SendEmailsModifyID()
+    Dim OutlookApp As Object
+    Dim MailItem As Object
+    Dim ws As Worksheet
+    Dim i As Integer
+    Dim recipient As String
+    Dim idValue As String
+    Dim body As String
+    Dim subject As String
+    
+    ' Set the worksheet
+    Set ws = ThisWorkbook.Sheets(1) ' Adjust to your sheet name if needed
+    
+    ' Create Outlook application object
+    On Error Resume Next
+    Set OutlookApp = GetObject(, "Outlook.Application")
+    If OutlookApp Is Nothing Then
+        Set OutlookApp = CreateObject("Outlook.Application")
+    End If
+    On Error GoTo 0
+    
+    ' Define email subject
+    subject = "Action Required: Please Modify Your ID Entry"
+    
+    ' Loop through rows in Excel
+    For i = 2 To ws.Cells(ws.Rows.Count, 1).End(xlUp).Row ' Assuming data starts from row 2
+        recipient = ws.Cells(i, 1).Value ' Column A (Email)
+        idValue = ws.Cells(i, 2).Value ' Column B (ID)
+        
+        ' Skip rows with blank email
+        If recipient <> "" Then
+            ' Compose the email body
+            body = "Dear User," & vbNewLine & vbNewLine & _
+                   "Our records indicate that your ID entry (" & idValue & ") requires modification. " & _
+                   "Please update it at your earliest convenience." & vbNewLine & vbNewLine & _
+                   "Thank you!" & vbNewLine & "Your Team"
+            
+            ' Create a new mail item
+            Set MailItem = OutlookApp.CreateItem(0)
+            
+            With MailItem
+                .To = recipient
+                .Subject = subject
+                .Body = body
+                .Display ' Previews the email
+            End With
+        End If
+    Next i
+    
+    ' Clean up
+    Set MailItem = Nothing
+    Set OutlookApp = Nothing
+End Sub
