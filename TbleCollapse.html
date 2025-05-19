@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Collapsible Columns Table</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            transition: width 0.3s ease;
+            white-space: nowrap;
+            min-width: 50px;
+        }
+        .collapse-btn {
+            cursor: pointer;
+            padding: 2px 5px;
+            font-size: 14px;
+            margin: 2px;
+            border: none;
+            background-color: #ddd;
+        }
+        .collapsed-col {
+            width: 30px;
+            padding: 0;
+            text-align: center;
+            overflow: hidden;
+        }
+        .collapsed-col .collapse-btn {
+            padding: 0;
+            font-size: 16px;
+            margin: 0;
+        }
+        .collapsed-col span {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <table id="collapsibleTable">
+        <tr>
+            <th>Column 1 <button class="collapse-btn" onclick="toggleColumn(0)">-</button></th>
+            <th>Column 2 <button class="collapse-btn" onclick="toggleColumn(1)">-</button></th>
+            <th>Column 3 <button class="collapse-btn" onclick="toggleColumn(2)">-</button></th>
+        </tr>
+        <tr>
+            <td>Data A1</td>
+            <td>Data A2</td>
+            <td>Data A3</td>
+        </tr>
+        <tr>
+            <td>Data B1</td>
+            <td>Data B2</td>
+            <td>Data B3</td>
+        </tr>
+    </table>
+    <script>
+        function toggleColumn(colIndex) {
+            const table = document.getElementById("collapsibleTable");
+            const th = table.querySelectorAll("th")[colIndex];
+            const isCollapsed = th.classList.toggle("collapsed-col");
+            const btn = th.querySelector(".collapse-btn");
+
+            for (let row of table.rows) {
+                const cell = row.cells[colIndex];
+                if (isCollapsed) {
+                    if (!cell.dataset.originalContent) {
+                        cell.dataset.originalContent = cell.innerHTML;
+                        cell.dataset.originalWidth = cell.offsetWidth;
+                    }
+                    cell.style.width = "30px";
+                    cell.innerHTML = '<button class="collapse-btn" onclick="toggleColumn(' + colIndex + ')">+</button>';
+                    cell.classList.add("collapsed-col");
+                } else {
+                    cell.innerHTML = cell.dataset.originalContent;
+                    cell.style.width = "auto";
+                    cell.classList.remove("collapsed-col");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
