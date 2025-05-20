@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Table with Floating Delete Buttons</title>
+  <style>
+    .table-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-left: 0px; /* no margin initially */
+      transition: margin-left 0.3s ease;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .text-content {
+      display: inline;
+    }
+
+    .delete-icon {
+      position: absolute;
+      background: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      transform: translateY(-50%);
+      display: none;
+      user-select: none;
+      /* width to avoid shrinking */
+      width: 20px;
+      text-align: center;
+    }
+
+    .delete-icon.show {
+      display: block;
+    }
+
+    #edit-btn {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="table-wrapper" id="tableWrapper">
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Column 1</th>
+        <th>Column 2</th>
+        <th>Column 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="text-content">Data A1</span></td>
+        <td><span class="text-content">Data A2</span></td>
+        <td><span class="text-content">Data A3</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<br>
+<button onclick="addRow()">Add Row</button>
+<button id="edit-btn" onclick="toggleEdit()">Edit</button>
+
+<script>
+  let editMode = false;
+
+  function toggleEdit() {
+    editMode = !editMode;
+    const wrapper = document.getElementById('tableWrapper');
+    // Shift table right when editing to make space for delete buttons
+    wrapper.style.marginLeft = editMode ? '40px' : '0px';
+
+    const table = document.getElementById("dataTable");
+    const rows = table.querySelectorAll("tbody tr");
+
+    rows.forEach(row => {
+      if (!row._deleteBtn) {
+        addDeleteIcon(row);
+      }
+      row._deleteBtn.classList.toggle('show', editMode);
+    });
+
+    if (editMode) {
+      positionDeleteButtons();
+    }
+  }
+
+  function addRow() {
+  const table = document.getElementById("dataTable");
+  const tbody = table.querySelector("tbody");
+  const newRow = tbody.insertRow();
+  const columnCount = table.rows[0].cells.length;
+
+  for (let i = 0; i < columnCount; i++) {
+    const newCell = newRow.insertCell();
+    newCell.innerHTML = `<span class="text-content">New Data</span>`;
+  }
+
+  addDeleteIcon(newRow);
+  if (editMode) {
+    newRow._deleteBtn.classList.add('show');  // Show X immediately for new row
+    positionDeleteButtons();
+  }
+}
+
+  function addDeleteIcon(row) {
+    const icon = document.createElement('button');
+    icon.className = 'delete-icon';
+    icon.textContent = 'X';
+
+    icon.onclick = () => {
+      row.remove();
+      icon.remove();
+      if (editMode) {
+        positionDeleteButtons();
+      }
+    };
+
+    // Append inside table-wrapper so it's positioned relative to it
+    const wrapper = document.getElementById('tableWrapper');
+    wrapper.appendChild(icon);
+    row._deleteBtn = icon;
+  }
+
+  function positionDeleteButtons() {
+    const rows = document.querySelectorAll("#dataTable tbody tr");
+    const wrapper = document.getElementById("tableWrapper");
+
+    rows.forEach(row => {
+      if (row._deleteBtn) {
+        // Vertical center relative to the row inside the wrapper
+        const offsetTop = row.offsetTop + row.offsetHeight / 2;
+        row._deleteBtn.style.top = offsetTop + 'px';
+
+        // Position to the left of the table, outside the first column
+        // Negative left to place it outside left edge of table-wrapper
+        row._deleteBtn.style.left = '-30px';
+      }
+    });
+  }
+
+  // Reposition buttons on window resize for alignment
+  window.addEventListener('resize', () => {
+    if (editMode) {
+      positionDeleteButtons();
+    }
+  });
+</script>
+
+</body>
+</html>
