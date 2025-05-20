@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Combined Table: Collapsible Columns + Add/Delete Rows</title>
+  <style>
+    .table-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-left: 0px;
+      transition: margin-left 0.3s ease;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    col {
+      transition: width 0.3s ease;
+    }
+
+    col.default {
+      width: 150px;
+    }
+
+    col.collapsed {
+      width: 30px !important;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .group-header {
+      background: #eee;
+      font-weight: bold;
+      text-align: center;
+      transition: width 0.3s ease;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .collapse-btn {
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+      border: none;
+      background: none;
+      font-size: 16px;
+      margin-left: 8px;
+    }
+
+    .text-content {
+      display: inline;
+    }
+
+    .delete-icon {
+      position: absolute;
+      background: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      transform: translateY(-50%);
+      display: none;
+      width: 20px;
+      text-align: center;
+    }
+
+    .delete-icon.show {
+      display: block;
+    }
+
+    #edit-btn {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="table-wrapper" id="tableWrapper">
+  <table id="myTable">
+    <colgroup>
+      <col id="col1" class="default" />
+      <col id="col2" class="default" />
+      <col id="col3" class="default" />
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="group-header" id="group1" colspan="2">
+          Group 1
+          <button class="collapse-btn" onclick="toggleGroup(0)">-</button>
+        </th>
+        <th class="group-header" id="group2" colspan="1">
+          Group 2
+          <button class="collapse-btn" onclick="toggleGroup(1)">-</button>
+        </th>
+      </tr>
+      <tr>
+        <th>
+          <span class="text-content">Column 1</span>
+          <button class="collapse-btn" onclick="toggleCol(0)">-</button>
+        </th>
+        <th>
+          <span class="text-content">Column 2</span>
+          <button class="collapse-btn" onclick="toggleCol(1)">-</button>
+        </th>
+        <th>
+          <span class="text-content">Column 3</span>
+          <button class="collapse-btn" onclick="toggleCol(2)">-</button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="text-content">Data A1</span></td>
+        <td><span class="text-content">Data A2</span></td>
+        <td><span class="text-content">Data A3</span></td>
+      </tr>
+      <tr>
+        <td><span class="text-content">Data B1</span></td>
+        <td><span class="text-content">Data B2</span></td>
+        <td><span class="text-content">Data B3</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<br>
+<button onclick="addRow()">Add Row</button>
+<button id="edit-btn" onclick="toggleEdit()">Edit</button>
+
+<script>
+  const collapsed = [false, false, false];
+  const groupCollapsed = [false, false];
+  const groupMap = [[0, 1], [2]];
+  let editMode = false;
+
+  function toggleCol(idx) {
+    const col = document.getElementById(`col${idx + 1}`);
+    const table = document.getElementById('myTable');
+    const cell = table.tHead.rows[1].cells[idx];
+    const btn = cell.querySelector('button');
+    const textSpan = cell.querySelector('.text-content');
+
+    if (!collapsed[idx]) {
+      col.classList.add('collapsed');
+      col.classList.remove('default');
+      textSpan.style.display = 'none';
+      btn.textContent = '+';
+      for (let r of table.tBodies[0].rows) {
+        r.cells[idx].querySelector('.text-content').style.display = 'none';
+      }
+    } else {
+      col.classList.remove('collapsed');
+      col.classList.add('default');
+      textSpan.style.display = '';
+      btn.textContent = '-';
+      for (let r of table.tBodies[0].rows) {
+        r.cells[idx].querySelector('.text-content').style.display = '';
+      }
+    }
+    collapsed[idx] = !collapsed[idx];
+    updateGroupWidths();
+  }
+
+  function toggleGroup(groupIdx) {
+    const columns = groupMap[groupIdx];
+    const groupHeader = document.getElementById(`group${groupIdx + 1}`);
+    const groupBtn = groupHeader.querySelector('button');
+    const isCollapsed = groupCollapsed[groupIdx];
+
+    for (let colIdx of columns) {
+      if (collapsed[colIdx] === isCollapsed) toggleCol(colIdx);
+    }
+
+    groupCollapsed[groupIdx] = !groupCollapsed[groupIdx];
+    groupBtn.textContent = groupCollapsed[groupIdx] ? '+' : '-';
+  }
+
+  function updateGroupWidths() {
+    const g1 = document.getElementById('group1');
+    const g2 = document.getElementById('group2');
+    const c1 = document.getElementById('col1');
+    const c2 = document.getElementById('col2');
+    const c3 = document.getElementById('col3');
+    requestAnimationFrame(() => {
+      g1.style.width = (c1.offsetWidth + c2.offsetWidth) + 'px';
+      g2.style.width = c3.offsetWidth + 'px';
+    });
+  }
+
+  function toggleEdit() {
+    editMode = !editMode;
+    document.getElementById('tableWrapper').style.marginLeft = editMode ? '40px' : '0px';
+    const rows = document.querySelectorAll("#myTable tbody tr");
+    rows.forEach(row => {
+      if (!row._deleteBtn) addDeleteIcon(row);
+      row._deleteBtn.classList.toggle('show', editMode);
+    });
+    if (editMode) positionDeleteButtons();
+  }
+
+  function addRow() {
+    const table = document.getElementById("myTable");
+    const tbody = table.querySelector("tbody");
+    const newRow = tbody.insertRow();
+    for (let i = 0; i < 3; i++) {
+      const newCell = newRow.insertCell();
+      const span = document.createElement("span");
+      span.className = "text-content";
+      span.textContent = "New Data";
+      if (collapsed[i]) span.style.display = "none";
+      newCell.appendChild(span);
+    }
+    addDeleteIcon(newRow);
+    if (editMode) {
+      newRow._deleteBtn.classList.add('show');
+      positionDeleteButtons();
+    }
+  }
+
+  function addDeleteIcon(row) {
+    const icon = document.createElement('button');
+    icon.className = 'delete-icon';
+    icon.textContent = 'X';
+    icon.onclick = () => {
+      row.remove();
+      icon.remove();
+      if (editMode) positionDeleteButtons();
+    };
+    document.getElementById('tableWrapper').appendChild(icon);
+    row._deleteBtn = icon;
+  }
+
+  function positionDeleteButtons() {
+    const rows = document.querySelectorAll("#myTable tbody tr");
+    rows.forEach(row => {
+      if (row._deleteBtn) {
+        const offsetTop = row.offsetTop + row.offsetHeight / 2;
+        row._deleteBtn.style.top = offsetTop + 'px';
+        row._deleteBtn.style.left = '-30px';
+      }
+    });
+  }
+
+  window.onload = updateGroupWidths;
+  window.onresize = () => {
+    updateGroupWidths();
+    if (editMode) positionDeleteButtons();
+  };
+</script>
+
+</body>
+</html>
