@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <title>Collapsible Columns with Colgroup Width Control</title>
 <style>
-  table {
+ table {
     border-collapse: collapse;
     width: 100%;
     table-layout: fixed;
@@ -31,6 +31,7 @@
     text-align: center;
     transition: width 0.3s ease;
     overflow: hidden;
+    position: relative;
   }
   .collapse-btn {
     cursor: pointer;
@@ -39,6 +40,7 @@
     border: none;
     background: none;
     font-size: 16px;
+    margin-left: 8px;
   }
   .text-content {
     display: inline;
@@ -54,9 +56,15 @@
     <col id="col3" class="default" />
   </colgroup>
   <thead>
-    <tr>
-      <th class="group-header" id="group1" colspan="2">Group 1</th>
-      <th class="group-header" id="group2" colspan="1">Group 2</th>
+     <tr>
+      <th class="group-header" id="group1" colspan="2">
+        Group 1
+        <button class="collapse-btn" onclick="toggleGroup(0)">-</button>
+      </th>
+      <th class="group-header" id="group2" colspan="1">
+        Group 2
+        <button class="collapse-btn" onclick="toggleGroup(1)">-</button>
+      </th>
     </tr>
     <tr>
       <th>
@@ -88,7 +96,12 @@
 </table>
 
 <script>
-  const collapsed = [false, false, false];
+  const collapsed = [false, false, false];      // individual column collapsed state
+  const groupCollapsed = [false, false];        // group 1 and group 2 collapsed state
+  const groupMap = [
+    [0, 1], // group 1 includes col 0, 1
+    [2]     // group 2 includes col 2
+  ];
 
   function toggleCol(idx) {
     const col = document.getElementById(`col${idx + 1}`);
@@ -121,6 +134,23 @@
 
     collapsed[idx] = !collapsed[idx];
     updateGroupWidths();
+  }
+  function toggleGroup(groupIdx) {
+    const columns = groupMap[groupIdx];
+    const groupHeader = document.getElementById(`group${groupIdx + 1}`);
+    const groupBtn = groupHeader.querySelector('button');
+
+    const isCurrentlyCollapsed = groupCollapsed[groupIdx];
+
+    for (let i = 0; i < columns.length; i++) {
+      const colIdx = columns[i];
+      if (collapsed[colIdx] === isCurrentlyCollapsed) {
+        toggleCol(colIdx);
+      }
+    }
+
+    groupCollapsed[groupIdx] = !groupCollapsed[groupIdx];
+    groupBtn.textContent = groupCollapsed[groupIdx] ? '+' : '-';
   }
 
   function updateGroupWidths() {
