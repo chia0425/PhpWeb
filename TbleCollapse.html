@@ -1,88 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Collapsible Columns Table</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            table-layout: fixed;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-            transition: width 0.3s ease;
-            white-space: nowrap;
-            min-width: 50px;
-        }
-        .collapse-btn {
-            cursor: pointer;
-            padding: 2px 5px;
-            font-size: 14px;
-            margin: 2px;
-            border: none;
-            background-color: #ddd;
-        }
-        .collapsed-col {
-            width: 30px;
-            padding: 0;
-            text-align: center;
-            overflow: hidden;
-        }
-        .collapsed-col .collapse-btn {
-            padding: 0;
-            font-size: 16px;
-            margin: 0;
-        }
-        .collapsed-col span {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8" />
+<title>Collapsible Columns with Colgroup Width Control</title>
+<style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+  }
+  col {
+    transition: width 0.3s ease;
+  }
+  col.default {
+    width: 150px;
+  }
+  col.collapsed {
+    width: 30px !important;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .group-header {
+    background: #eee;
+    font-weight: bold;
+    text-align: center;
+    transition: width 0.3s ease;
+    overflow: hidden;
+  }
+  .collapse-btn {
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+    border: none;
+    background: none;
+    font-size: 16px;
+  }
+  .text-content {
+    display: inline;
+  }
+</style>
 </head>
 <body>
-    <table id="collapsibleTable">
-        <tr>
-            <th>Column 1 <button class="collapse-btn" onclick="toggleColumn(0)">-</button></th>
-            <th>Column 2 <button class="collapse-btn" onclick="toggleColumn(1)">-</button></th>
-            <th>Column 3 <button class="collapse-btn" onclick="toggleColumn(2)">-</button></th>
-        </tr>
-        <tr>
-            <td>Data A1</td>
-            <td>Data A2</td>
-            <td>Data A3</td>
-        </tr>
-        <tr>
-            <td>Data B1</td>
-            <td>Data B2</td>
-            <td>Data B3</td>
-        </tr>
-    </table>
-    <script>
-        function toggleColumn(colIndex) {
-            const table = document.getElementById("collapsibleTable");
-            const th = table.querySelectorAll("th")[colIndex];
-            const isCollapsed = th.classList.toggle("collapsed-col");
-            const btn = th.querySelector(".collapse-btn");
 
-            for (let row of table.rows) {
-                const cell = row.cells[colIndex];
-                if (isCollapsed) {
-                    if (!cell.dataset.originalContent) {
-                        cell.dataset.originalContent = cell.innerHTML;
-                        cell.dataset.originalWidth = cell.offsetWidth;
-                    }
-                    cell.style.width = "30px";
-                    cell.innerHTML = '<button class="collapse-btn" onclick="toggleColumn(' + colIndex + ')">+</button>';
-                    cell.classList.add("collapsed-col");
-                } else {
-                    cell.innerHTML = cell.dataset.originalContent;
-                    cell.style.width = "auto";
-                    cell.classList.remove("collapsed-col");
-                }
-            }
-        }
-    </script>
+<table id="myTable">
+  <colgroup>
+    <col id="col1" class="default" />
+    <col id="col2" class="default" />
+    <col id="col3" class="default" />
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="group-header" id="group1" colspan="2">Group 1</th>
+      <th class="group-header" id="group2" colspan="1">Group 2</th>
+    </tr>
+    <tr>
+      <th>
+        <span class="text-content">Column 1</span>
+        <button class="collapse-btn" onclick="toggleCol(0)">-</button>
+      </th>
+      <th>
+        <span class="text-content">Column 2</span>
+        <button class="collapse-btn" onclick="toggleCol(1)">-</button>
+      </th>
+      <th>
+        <span class="text-content">Column 3</span>
+        <button class="collapse-btn" onclick="toggleCol(2)">-</button>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="text-content">Data A1</span></td>
+      <td><span class="text-content">Data A2</span></td>
+      <td><span class="text-content">Data A3</span></td>
+    </tr>
+    <tr>
+      <td><span class="text-content">Data B1</span></td>
+      <td><span class="text-content">Data B2</span></td>
+      <td><span class="text-content">Data B3</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  const collapsed = [false, false, false];
+
+  function toggleCol(idx) {
+    const col = document.getElementById(`col${idx + 1}`);
+    const table = document.getElementById('myTable');
+    const cell = table.tHead.rows[1].cells[idx];
+    const btn = cell.querySelector('button');
+    const textSpan = cell.querySelector('.text-content');
+
+    if (!collapsed[idx]) {
+      // Collapse
+      col.classList.add('collapsed');
+      col.classList.remove('default');
+      textSpan.style.display = 'none';
+      btn.textContent = '+';
+
+      for (let r = 0; r < table.tBodies[0].rows.length; r++) {
+        table.tBodies[0].rows[r].cells[idx].querySelector('.text-content').style.display = 'none';
+      }
+    } else {
+      // Expand
+      col.classList.remove('collapsed');
+      col.classList.add('default');
+      textSpan.style.display = '';
+      btn.textContent = '-';
+
+      for (let r = 0; r < table.tBodies[0].rows.length; r++) {
+        table.tBodies[0].rows[r].cells[idx].querySelector('.text-content').style.display = '';
+      }
+    }
+
+    collapsed[idx] = !collapsed[idx];
+    updateGroupWidths();
+  }
+
+  function updateGroupWidths() {
+    const group1 = document.getElementById('group1');
+    const group2 = document.getElementById('group2');
+    const col1 = document.getElementById('col1');
+    const col2 = document.getElementById('col2');
+    const col3 = document.getElementById('col3');
+
+    requestAnimationFrame(() => {
+      group1.style.width = (col1.offsetWidth + col2.offsetWidth) + 'px';
+      group2.style.width = col3.offsetWidth + 'px';
+    });
+  }
+
+  window.onload = updateGroupWidths;
+  window.onresize = updateGroupWidths;
+</script>
+
 </body>
 </html>
