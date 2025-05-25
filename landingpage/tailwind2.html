@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corporate Request Page - Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    function toggleSection(id) {
+      const section = document.getElementById(id);
+      section.classList.toggle('hidden');
+    }
+  </script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+  <form action="/submit-your-endpoint" method="POST" class="max-w-7xl mx-auto">
+
+    <!-- Requestor Info -->
+    <div class="bg-white shadow rounded-lg p-4 mb-4">
+      <h2 class="text-xl font-semibold mb-2">Requestor Information</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium" for="requestorName">Name:</label>
+          <input id="requestorName" name="requestorName" type="text" class="w-full border rounded px-2 py-1" value="John Doe" required />
+        </div>
+        <div>
+          <label class="block font-medium" for="quantity">Quantity:</label>
+          <input id="quantity" name="quantity" type="number" min="1" class="w-full border rounded px-2 py-1" value="5" required />
+        </div>
+        <div class="col-span-2">
+          <label class="block font-medium" for="comments">Comments:</label>
+          <textarea id="comments" name="comments" rows="3" class="w-full border rounded px-2 py-1" required>Please process this by EOD.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requestee Info -->
+    <div class="bg-white shadow rounded-lg p-4 mb-4">
+      <h2 class="text-xl font-semibold mb-2">Handled By</h2>
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label class="block font-medium" for="preprovIE">Preprov IE:</label>
+          <input id="preprovIE" name="preprovIE" type="text" class="w-full border rounded px-2 py-1" value="Alice" />
+        </div>
+        <div>
+          <label class="block font-medium" for="rtIE">RT IE:</label>
+          <input id="rtIE" name="rtIE" type="text" class="w-full border rounded px-2 py-1" value="Bob" />
+        </div>
+        <div>
+          <label class="block font-medium" for="networkIE">Network IE:</label>
+          <input id="networkIE" name="networkIE" type="text" class="w-full border rounded px-2 py-1" value="Charlie" />
+        </div>
+      </div>
+    </div>
+
+    <!-- A-End and B-End Side-by-Side -->
+    <div class="flex flex-col md:flex-row gap-4 mb-4">
+
+      <!-- A-End Section -->
+      <div class="bg-white shadow rounded-lg p-4 flex-1">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold">A-End (Preprov)</h2>
+          <button type="button" onclick="toggleSection('aEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+        </div>
+        <div id="aEndTable" class="mt-2">
+          <table class="w-full table-auto border mt-2 text-sm">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="border px-2 py-1">Column 1</th>
+                <th class="border px-2 py-1">Column 2</th>
+                <th class="border px-2 py-1">Column 3</th>
+                <th class="border px-2 py-1">Column 4</th>
+                <th class="border px-2 py-1">Column 5</th>
+                <th class="border px-2 py-1">Column 6</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol1" value="Data A1" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol2" value="Data A2" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol3" value="Data A3" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol4" value="Data A4" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol5" value="Data A5" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="aEndCol6" value="Data A6" class="w-full border-none focus:ring-0" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- B-End Section -->
+      <div class="bg-white shadow rounded-lg p-4 flex-1">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold">B-End (Network)</h2>
+          <button type="button" onclick="toggleSection('bEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+        </div>
+        <div id="bEndTable" class="mt-2 hidden">
+          <table class="w-full table-auto border mt-2 text-sm">
+            <thead class="bg-gray-200">
+              <tr>
+                <th class="border px-2 py-1">Column 1</th>
+                <th class="border px-2 py-1">Column 2</th>
+                <th class="border px-2 py-1">Column 3</th>
+                <th class="border px-2 py-1">Column 4</th>
+                <th class="border px-2 py-1">Column 5</th>
+                <th class="border px-2 py-1">Column 6</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol1" value="Data B1" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol2" value="Data B2" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol3" value="Data B3" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol4" value="Data B4" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol5" value="Data B5" class="w-full border-none focus:ring-0" />
+                </td>
+                <td class="border px-2 py-1">
+                  <input type="text" name="bEndCol6" value="Data B6" class="w-full border-none focus:ring-0" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RT-End Section (full width) -->
+    <div class="bg-white shadow rounded-lg p-4 mb-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">RT-End (RT)</h2>
+        <button type="button" onclick="toggleSection('rtEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+      </div>
+      <div id="rtEndTable" class="mt-2">
+        <table class="w-full table-auto border mt-2 text-sm">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="border px-2 py-1">Column 1</th>
+              <th class="border px-2 py-1">Column 2</th>
+              <th class="border px-2 py-1">Column 3</th>
+              <th class="border px-2 py-1">Column 4</th>
+              <th class="border px-2 py-1">Column 5</th>
+              <th class="border px-2 py-1">Column 6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol1" value="Data R1" class="w-full border-none focus:ring-0" />
+              </td>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol2" value="Data R2" class="w-full border-none focus:ring-0" />
+              </td>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol3" value="Data R3" class="w-full border-none focus:ring-0" />
+              </td>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol4" value="Data R4" class="w-full border-none focus:ring-0" />
+              </td>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol5" value="Data R5" class="w-full border-none focus:ring-0" />
+              </td>
+              <td class="border px-2 py-1">
+                <input type="text" name="rtEndCol6" value="Data R6" class="w-full border-none focus:ring-0" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="text-center">
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+        Submit
+      </button>
+    </div>
+
+  </form>
+</body>
+</html>

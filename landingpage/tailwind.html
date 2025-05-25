@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corporate Request Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    function toggleSection(id) {
+      const section = document.getElementById(id);
+      section.classList.toggle('hidden');
+    }
+  </script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+  <!-- Requestor Info -->
+  <div class="bg-white shadow rounded-lg p-4 mb-4">
+    <h2 class="text-xl font-semibold mb-2">Requestor Information</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div><strong>Name:</strong> John Doe</div>
+      <div><strong>Quantity:</strong> 5</div>
+      <div class="col-span-2"><strong>Comments:</strong> Please process this by EOD.</div>
+    </div>
+  </div>
+
+  <!-- Requestee Info -->
+  <div class="bg-white shadow rounded-lg p-4 mb-4">
+    <h2 class="text-xl font-semibold mb-2">Handled By</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <div><strong>Preprov IE:</strong> Alice</div>
+      <div><strong>RT IE:</strong> Bob</div>
+      <div><strong>Network IE:</strong> Charlie</div>
+    </div>
+  </div>
+
+  <!-- A-End and B-End Side-by-Side -->
+  <div class="flex flex-col md:flex-row gap-4 mb-4">
+    
+    <!-- A-End Section -->
+    <div class="bg-white shadow rounded-lg p-4 flex-1">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">A-End (Preprov)</h2>
+        <button onclick="toggleSection('aEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+      </div>
+      <div id="aEndTable" class="mt-2">
+        <table class="w-full table-auto border mt-2 text-sm">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="border px-2 py-1">Column 1</th>
+              <th class="border px-2 py-1">Column 2</th>
+              <th class="border px-2 py-1">Column 3</th>
+              <th class="border px-2 py-1">Column 4</th>
+              <th class="border px-2 py-1">Column 5</th>
+              <th class="border px-2 py-1">Column 6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border px-2 py-1">Data A1</td>
+              <td class="border px-2 py-1">Data A2</td>
+              <td class="border px-2 py-1">Data A3</td>
+              <td class="border px-2 py-1">Data A4</td>
+              <td class="border px-2 py-1">Data A5</td>
+              <td class="border px-2 py-1">Data A6</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- B-End Section -->
+    <div class="bg-white shadow rounded-lg p-4 flex-1">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">B-End (Network)</h2>
+        <button onclick="toggleSection('bEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+      </div>
+      <div id="bEndTable" class="mt-2 hidden">
+        <table class="w-full table-auto border mt-2 text-sm">
+          <thead class="bg-gray-200">
+            <tr>
+              <th class="border px-2 py-1">Column 1</th>
+              <th class="border px-2 py-1">Column 2</th>
+              <th class="border px-2 py-1">Column 3</th>
+              <th class="border px-2 py-1">Column 4</th>
+              <th class="border px-2 py-1">Column 5</th>
+              <th class="border px-2 py-1">Column 6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border px-2 py-1">Data B1</td>
+              <td class="border px-2 py-1">Data B2</td>
+              <td class="border px-2 py-1">Data B3</td>
+              <td class="border px-2 py-1">Data B4</td>
+              <td class="border px-2 py-1">Data B5</td>
+              <td class="border px-2 py-1">Data B6</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RT-End Section (full width) -->
+  <div class="bg-white shadow rounded-lg p-4 mb-4">
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">RT-End (RT)</h2>
+      <button onclick="toggleSection('rtEndTable')" class="text-blue-600 hover:underline">Toggle</button>
+    </div>
+    <div id="rtEndTable" class="mt-2">
+      <table class="w-full table-auto border mt-2 text-sm">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="border px-2 py-1">Column 1</th>
+            <th class="border px-2 py-1">Column 2</th>
+            <th class="border px-2 py-1">Column 3</th>
+            <th class="border px-2 py-1">Column 4</th>
+            <th class="border px-2 py-1">Column 5</th>
+            <th class="border px-2 py-1">Column 6</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="border px-2 py-1">Data R1</td>
+            <td class="border px-2 py-1">Data R2</td>
+            <td class="border px-2 py-1">Data R3</td>
+            <td class="border px-2 py-1">Data R4</td>
+            <td class="border px-2 py-1">Data R5</td>
+            <td class="border px-2 py-1">Data R6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>
