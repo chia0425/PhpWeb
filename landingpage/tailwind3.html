@@ -9,6 +9,58 @@
       const section = document.getElementById(id);
       section.classList.toggle('hidden');
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.querySelector('form');
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();  // prevent normal submit
+
+        // Helper function to gather inputs from a container by id
+        function gatherInputs(sectionId) {
+          const inputs = document.querySelectorAll(`#${sectionId} input`);
+          const data = {};
+          inputs.forEach(input => {
+            data[input.name] = input.value;
+          });
+          return data;
+        }
+
+        // Gather A-End, B-End, RT-End data
+        const aEndData = gatherInputs('aEndTable');
+        const bEndData = gatherInputs('bEndTable');
+        const rtEndData = gatherInputs('rtEndTable');
+
+        // Prepare payload
+        const payload = {
+          aEnd: aEndData,
+          bEnd: bEndData,
+          rtEnd: rtEndData
+        };
+
+        // Send AJAX request
+        fetch('/submit-your-endpoint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not OK');
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert('Form submitted successfully!');
+          console.log('Success:', data);
+        })
+        .catch(error => {
+          alert('Error submitting form: ' + error.message);
+          console.error('Error:', error);
+        });
+      });
+    });
   </script>
 </head>
 <body class="bg-gray-100 p-6 font-sans">
@@ -16,23 +68,23 @@
   <form action="/submit-your-endpoint" method="POST" class="max-w-7xl mx-auto">
 
     <!-- Requestor Info -->
-<div class="bg-white shadow rounded-lg p-4 mb-4">
-  <h2 class="text-xl font-semibold mb-2">Requestor Information</h2>
-  <div class="grid grid-cols-2 gap-4">
-    <div>
-      <label class="block font-medium">Name:</label>
-      <p class="border rounded px-2 py-1 bg-gray-100">John Doe</p>
+    <div class="bg-white shadow rounded-lg p-4 mb-4">
+      <h2 class="text-xl font-semibold mb-2">Requestor Information</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium" for="requestorName">Name:</label>
+          <div id="requestorName" class="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700 select-none">John Doe</div>
+        </div>
+        <div>
+          <label class="block font-medium" for="quantity">Quantity:</label>
+          <div id="quantity" class="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700 select-none">5</div>
+        </div>
+        <div class="col-span-2">
+          <label class="block font-medium" for="comments">Comments:</label>
+          <div id="comments" class="w-full border rounded px-2 py-1 bg-gray-100 text-gray-700 select-none" style="min-height: 3rem;">Please process this by EOD.</div>
+        </div>
+      </div>
     </div>
-    <div>
-      <label class="block font-medium">Quantity:</label>
-      <p class="border rounded px-2 py-1 bg-gray-100">5</p>
-    </div>
-    <div class="col-span-2">
-      <label class="block font-medium">Comments:</label>
-      <p class="border rounded px-2 py-1 bg-gray-100">Please process this by EOD.</p>
-    </div>
-  </div>
-</div>
 
     <!-- Requestee Info -->
     <div class="bg-white shadow rounded-lg p-4 mb-4">
@@ -146,13 +198,13 @@
 
     </div>
 
-    <!-- RT-End Section (full width) -->
+    <!-- RT-End Section -->
     <div class="bg-white shadow rounded-lg p-4 mb-4">
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold">RT-End (RT)</h2>
         <button type="button" onclick="toggleSection('rtEndTable')" class="text-blue-600 hover:underline">Toggle</button>
       </div>
-      <div id="rtEndTable" class="mt-2">
+      <div id="rtEndTable" class="mt-2 hidden">
         <table class="w-full table-auto border mt-2 text-sm">
           <thead class="bg-gray-200">
             <tr>
@@ -190,13 +242,8 @@
       </div>
     </div>
 
-    <!-- Submit Button -->
-    <div class="text-center">
-      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-        Submit
-      </button>
-    </div>
-
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">Submit</button>
   </form>
+
 </body>
 </html>
