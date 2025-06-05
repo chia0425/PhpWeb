@@ -1,3 +1,4 @@
+-- Replace YourTable with your actual table name
 WITH MaxDatesPerMonth AS (
     SELECT 
         YEAR(DateColumn) AS Y,
@@ -13,6 +14,55 @@ FilteredLatest AS (
       ON YEAR(t.DateColumn) = m.Y
      AND MONTH(t.DateColumn) = m.M
      AND t.DateColumn = m.MaxDate
+),
+-- Handle GMT split into Quartz/NonQuartz
+LOBSplit AS (
+    SELECT 
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%qz%' THEN 'GMT-Quartz'
+            WHEN LOB = 'GMT' THEN 'GMT-NonQuartz'
+            ELSE LOB
+        END AS LOB,
+        DateColumn,
+        Type,
+        Quantity
+    FROM FilteredLatest
+),
+-- Calculate shared-server impact
+VirtualSplit AS (
+    SELECT LOB, SUM(Quantity) AS VirtualQty
+    FROM LOBSplit
+    WHERE Type = 'Virtual'
+    GROUP BY LOB
+),
+SharedServerQty AS (
+    SELECT Quantity AS SharedQty
+    FROM LOBSplit
+    WHERE LOB = 'Shared-Server' AND Type = 'Physical'
+),
+AdjustedPhysical AS (
+    SELECT 
+        l.LOB,
+        SUM(CASE WHEN l.Type = 'Physical' THEN l.Quantity ELSE 0 END) + 
+        ISNULL(ss.SharedQty, 0) * ISNULL(v.VirtualQty * 1.0 / vt.TotalVirtualQty, 0) AS AdjustedQty,
+        DATEPART(QUARTER, l.DateColumn) AS Quarter
+    FROM LOBSplit l
+    LEFT JOIN SharedServerQty ss ON 1=1
+    LEFT JOIN VirtualSplit v ON l.LOB = v.LOB
+    LEFT JOIN (
+        SELECT SUM(VirtualQty) AS TotalVirtualQty FROM VirtualSplit
+    ) vt ON 1=1
+    WHERE l.Type IN ('Physical', 'Virtual') AND l.LOB <> 'Shared-Server'
+    GROUP BY l.LOB, DATEPART(QUARTER, l.DateColumn), ss.SharedQty, v.VirtualQty, vt.TotalVirtualQty
+),
+-- Final: Get average per month (divide by 3 per quarter)
+FinalQuarterlyAverages AS (
+    SELECT 
+        LOB,
+        Quarter,
+        SUM(AdjustedQty) / 3.0 AS AvgQtyPerMonth
+    FROM AdjustedPhysical
+    GROUP BY LOB, Quarter
 )
-SELECT *
-FROM FilteredLatest
+SELECT * FROM FinalQuarterlyAverages
+ORDER BY Quarter, LOB;
