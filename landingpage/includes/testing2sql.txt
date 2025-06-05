@@ -53,30 +53,31 @@ SELECT
     q.Yr,
     q.Quarter,
     q.LOB,
+    q.SharedServerCategory,
 
-    -- 🟦 Physical Quantity (quarterly average)
+    -- Physical Quantity (quarterly average), add EET_Sum / 3 ONLY when SharedServerCategory = 'EET'
     (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) +
-    (s.EET_Sum / 3.0) AS PhysicalQty,
+    CASE WHEN q.SharedServerCategory = 'EET' THEN s.EET_Sum / 3.0 ELSE 0 END AS PhysicalQty,
 
-    -- 🟨 Virtual Quantity (quarterly average)
+    -- Virtual Quantity (quarterly average)
     SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / 3.0 AS VirtualQty,
 
-    -- 🟧 Shared Server CTI avg (used to compute virtual add)
+    -- Shared Server CTI average (used for virtual add calculation)
     s.CTI_Sum / 3.0 AS SharedServerAvg,
 
-    -- 🟩 Virtual Add based on proportion of virtual qty
+    -- Virtual Add based on proportion of virtual qty
     CASE 
         WHEN s.TotalVirtualSum > 0 THEN
-            ((SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / CAST(s.TotalVirtualSum AS FLOAT)) * (s.CTI_Sum / 3.0))
+            (SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / CAST(s.TotalVirtualSum AS FLOAT)) * (s.CTI_Sum / 3.0)
         ELSE 0
     END AS VirtualAdd,
 
-    -- 🟥 Final Total = PhysicalAvg + VirtualAdd
-    (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) +
-    (s.EET_Sum / 3.0) +
+    -- Total Quantity = PhysicalQty + VirtualAdd
+    ((SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) +
+     CASE WHEN q.SharedServerCategory = 'EET' THEN s.EET_Sum / 3.0 ELSE 0 END) +
     CASE 
         WHEN s.TotalVirtualSum > 0 THEN
-            ((SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / CAST(s.TotalVirtualSum AS FLOAT)) * (s.CTI_Sum / 3.0))
+            (SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / CAST(s.TotalVirtualSum AS FLOAT)) * (s.CTI_Sum / 3.0)
         ELSE 0
     END AS TotalQty
 
