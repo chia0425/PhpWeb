@@ -26,26 +26,28 @@ SharedServerAdjusted AS (
 
 QuarterlySums AS (
     SELECT 
-        YEAR(DateColumn) AS Yr,
-        DATEPART(QUARTER, DateColumn) AS Quarter,
+        YEAR(fl.DateColumn) AS Yr,
+        DATEPART(QUARTER, fl.DateColumn) AS Quarter,
         CASE 
-            WHEN Type = 'physical server' AND LOB = 'shared server' THEN sa.AdjustedLOB
-            ELSE LOB
+            WHEN fl.Type = 'physical server' AND fl.LOB = 'shared server' THEN sa.AdjustedLOB
+            ELSE fl.LOB
         END AS LOB,
-        Type,
-        SUM(Quantity) AS QtySum
+        fl.Type,
+        SUM(fl.Quantity) AS QtySum
     FROM FilteredLatest fl
     LEFT JOIN SharedServerAdjusted sa 
         ON fl.SerialNumber = sa.SerialNumber
         AND fl.DateColumn = sa.DateColumn
         AND fl.Type = sa.Type
         AND fl.LOB = sa.LOB
-    GROUP BY YEAR(DateColumn), DATEPART(QUARTER, DateColumn),
-             CASE 
-                WHEN Type = 'physical server' AND LOB = 'shared server' THEN sa.AdjustedLOB
-                ELSE LOB
-             END,
-             Type
+    GROUP BY 
+        YEAR(fl.DateColumn), 
+        DATEPART(QUARTER, fl.DateColumn),
+        CASE 
+            WHEN fl.Type = 'physical server' AND fl.LOB = 'shared server' THEN sa.AdjustedLOB
+            ELSE fl.LOB
+        END,
+        fl.Type
 ),
 
 -- Sum shared servers quantities separately for retail and gov
