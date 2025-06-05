@@ -1,93 +1,33 @@
-WITH FilteredLatest AS (
-    SELECT t.*
-    FROM YourTable t
-    CROSS APPLY (
-        SELECT MAX(DateColumn) AS MaxDate
-        FROM YourTable
-        WHERE YEAR(DateColumn) = YEAR(t.DateColumn)
-          AND MONTH(DateColumn) = MONTH(t.DateColumn)
-          AND YEAR(DateColumn) = 2017
-    ) m
-    WHERE t.DateColumn = m.MaxDate
-      AND YEAR(t.DateColumn) = 2017
-),
-
--- Attach HostingType info via LEFT JOIN
-WithHostingType AS (
-    SELECT 
-        f.*, 
-        t2.HostingType,
-        CASE 
-            WHEN f.Type = 'physical server' AND f.LOB = 'shared server' AND t2.HostingType IN ('apphost hvd', 'apphost ws') THEN 'EET'
-            WHEN f.Type = 'physical server' AND f.LOB = 'shared server' THEN 'CTI'
-            ELSE NULL
-        END AS SharedServerCategory
-    FROM FilteredLatest f
-    LEFT JOIN Table2 t2 ON f.SerialNumber = t2.SerialNumber
-),
-
-QuarterlySums AS (
-    SELECT 
-        YEAR(DateColumn) AS Yr,
-        DATEPART(QUARTER, DateColumn) AS Quarter,
-        LOB,
-        Type,
-        SharedServerCategory,
-        SUM(Quantity) AS QtySum
-    FROM WithHostingType
-    GROUP BY YEAR(DateColumn), DATEPART(QUARTER, DateColumn), LOB, Type, SharedServerCategory
-),
-
-SharedServerSum AS (
-    SELECT
-        Yr,
-        Quarter,
-        SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS TotalVirtualSum,
-        SUM(CASE WHEN SharedServerCategory = 'EET' THEN QtySum ELSE 0 END) AS EET_Sum,
-        SUM(CASE WHEN SharedServerCategory = 'CTI' THEN QtySum ELSE 0 END) AS CTI_Sum
-    FROM QuarterlySums
-    GROUP BY Yr, Quarter
-),
-
-VirtualSumByLOB AS (
-    SELECT
-        Yr,
-        Quarter,
-        LOB,
-        SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS VirtualSum
-    FROM QuarterlySums
-    GROUP BY Yr, Quarter, LOB
-)
-
 SELECT 
     q.Yr,
     q.Quarter,
     q.LOB,
 
-    -- Physical quantity quarterly average
-    (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) AS PhysicalQty,
-
-    -- Virtual quantity quarterly average
-    SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / 3.0 AS VirtualQty,
-
-    -- EET shared server quarterly average
-    s.EET_Sum / 3.0 AS EET_SharedServerAvg,
-
-    -- CTI shared server quarterly average (used for virtual add allocation)
-    s.CTI_Sum / 3.0 AS CTI_SharedServerAvg,
-
-    -- Virtual add allocated proportionally for CTI shared servers (only for EET LOB)
+    -- PhysicalQty: add EET shared servers only if LOB = EET
     CASE 
-        WHEN LOWER(q.LOB) = 'eet' AND s.TotalVirtualSum > 0 THEN
+        WHEN LOWER(q.LOB) = 'eet' THEN
+            (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) + (s.EET_Sum / 3.0)
+        ELSE
+            (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0)
+    END AS PhysicalQty,
+
+    -- VirtualQty: quarterly average virtual qty for this LOB
+    (SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / 3.0) AS VirtualQty,
+
+    -- Shared server CTI average
+    (s.CTI_Sum / 3.0) AS SharedServerAvg,
+
+    -- VirtualAdd proportional for all LOBs
+    CASE 
+        WHEN s.TotalVirtualSum > 0 THEN
             (v.VirtualSum / s.TotalVirtualSum) * (s.CTI_Sum / 3.0)
         ELSE 0
     END AS VirtualAdd,
 
-    -- Total quantity
-    CASE
+    -- TotalQty = PhysicalQty + VirtualAdd
+    CASE 
         WHEN LOWER(q.LOB) = 'eet' THEN
-            -- For EET: physical + EET shared server + virtual add portion
-            (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) +
+            (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) + 
             (s.EET_Sum / 3.0) +
             CASE 
                 WHEN s.TotalVirtualSum > 0 THEN
@@ -95,15 +35,21 @@ SELECT
                 ELSE 0
             END
         ELSE
-            -- For others: physical + virtual only, no EET shared server or virtual add
             (SUM(CASE WHEN q.Type = 'physical server' THEN q.QtySum ELSE 0 END) / 3.0) +
-            (SUM(CASE WHEN q.Type = 'virtual' THEN q.QtySum ELSE 0 END) / 3.0)
+            CASE 
+                WHEN s.TotalVirtualSum > 0 THEN
+                    (v.VirtualSum / s.TotalVirtualSum) * (s.CTI_Sum / 3.0)
+                ELSE 0
+            END
     END AS TotalQty
 
 FROM QuarterlySums q
 JOIN SharedServerSum s ON q.Yr = s.Yr AND q.Quarter = s.Quarter
-LEFT JOIN VirtualSumByLOB v ON q.Yr = v.Yr AND q.Quarter = v.Quarter AND q.LOB = v.LOB
-
+LEFT JOIN (
+    SELECT Yr, Quarter, LOB, SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS VirtualSum
+    FROM QuarterlySums
+    GROUP BY Yr, Quarter, LOB
+) v ON q.Yr = v.Yr AND q.Quarter = v.Quarter AND q.LOB = v.LOB
 WHERE q.LOB <> 'shared server'  -- exclude base shared server row
-GROUP BY q.Yr, q.Quarter, q.LOB, s.EET_Sum, s.CTI_Sum, s.TotalVirtualSum, v.VirtualSum
+GROUP BY q.Yr, q.Quarter, q.LOB, q.SharedServerCategory, s.EET_Sum, s.CTI_Sum, s.TotalVirtualSum, v.VirtualSum
 ORDER BY q.Yr, q.Quarter, q.LOB;
