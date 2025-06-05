@@ -37,6 +37,31 @@ QuarterlySums AS (
     GROUP BY YEAR(DateColumn), DATEPART(QUARTER, DateColumn), LOB, Type, SharedServerCategory
 ),
 
+-- Generate all combinations of Yr, Quarter, LOB to fill missing quarters with zero
+AllCombinations AS (
+    SELECT DISTINCT Yr, LOB, Quarter
+    FROM (
+        SELECT DISTINCT Yr FROM QuarterlySums
+    ) AS Years
+    CROSS JOIN (
+        SELECT DISTINCT LOB FROM QuarterlySums
+    ) AS Lobs
+    CROSS JOIN (VALUES (1),(2),(3),(4)) AS Quarters(Quarter)
+),
+
+QuarterlySumsFilled AS (
+    SELECT 
+        ac.Yr, 
+        ac.Quarter, 
+        ac.LOB,
+        ISNULL(qs.Type, '') AS Type,
+        ISNULL(qs.SharedServerCategory, '') AS SharedServerCategory,
+        ISNULL(qs.QtySum, 0) AS QtySum
+    FROM AllCombinations ac
+    LEFT JOIN QuarterlySums qs 
+        ON ac.Yr = qs.Yr AND ac.Quarter = qs.Quarter AND ac.LOB = qs.LOB
+),
+
 SharedServerSum AS (
     SELECT
         Yr,
@@ -44,108 +69,95 @@ SharedServerSum AS (
         SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS TotalVirtualSum,
         SUM(CASE WHEN SharedServerCategory = 'EET' THEN QtySum ELSE 0 END) AS EET_Sum,
         SUM(CASE WHEN SharedServerCategory = 'CTI' THEN QtySum ELSE 0 END) AS CTI_Sum
-    FROM QuarterlySums
+    FROM QuarterlySumsFilled
     GROUP BY Yr, Quarter
 ),
 
 VirtualSumsPerLOB AS (
     SELECT Yr, Quarter, LOB, SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS VirtualSum
-    FROM QuarterlySums
+    FROM QuarterlySumsFilled
     GROUP BY Yr, Quarter, LOB
 ),
 
--- Generate all quarters 1-4 for 2017 for each LOB
-Quarters AS (
-    SELECT 1 AS Quarter UNION ALL
-    SELECT 2 UNION ALL
-    SELECT 3 UNION ALL
-    SELECT 4
-),
-
-LOBs AS (
-    SELECT DISTINCT LOB FROM QuarterlySums WHERE Yr = 2017 AND LOB <> 'shared server'
-),
-
-FullYearQuarters AS (
-    SELECT 2017 AS Yr, L.LOB, Q.Quarter
-    FROM LOBs L
-    CROSS JOIN Quarters Q
-),
-
--- Join quarterly sums to full year quarters, replacing NULL with 0
-QuarterlyComplete AS (
+-- Now aggregate yearly by summing all 4 quarters, then divide by 4 to get yearly average
+YearlySums AS (
     SELECT 
-        fy.Yr,
-        fy.LOB,
-        fy.Quarter,
+        Yr,
+        LOB,
+        SUM(CASE WHEN Type = 'physical server' THEN QtySum ELSE 0 END) AS PhysicalSum,
+        SUM(CASE WHEN Type = 'virtual' THEN QtySum ELSE 0 END) AS VirtualSum
+    FROM QuarterlySumsFilled
+    GROUP BY Yr, LOB
+),
 
-        -- Physical Qty sum for this quarter & LOB
-        ISNULL(SUM(CASE WHEN qs.Type = 'physical server' THEN qs.QtySum ELSE 0 END), 0) AS PhysicalQty,
+-- Sum shared server sums by year (sum quarterly and divide by 4 later)
+SharedServerSumYearly AS (
+    SELECT
+        Yr,
+        SUM(EET_Sum) AS EET_Sum_Yearly,
+        SUM(CTI_Sum) AS CTI_Sum_Yearly,
+        SUM(TotalVirtualSum) AS TotalVirtualSum_Yearly
+    FROM SharedServerSum
+    GROUP BY Yr
+),
 
-        -- Virtual Qty sum for this quarter & LOB
-        ISNULL(SUM(CASE WHEN qs.Type = 'virtual' THEN qs.QtySum ELSE 0 END), 0) AS VirtualQty,
-
-        -- Shared server CTI sum for this quarter (from SharedServerSum)
-        ISNULL(ss.CTI_Sum, 0) AS SharedServerAvg,
-
-        -- EET shared server sum for this quarter (from SharedServerSum)
-        ISNULL(ss.EET_Sum, 0) AS EET_Sum,
-
-        -- Total Virtual sum for this quarter (from SharedServerSum)
-        ISNULL(ss.TotalVirtualSum, 0) AS TotalVirtualSum,
-
-        -- VirtualSum for this quarter and LOB (from VirtualSumsPerLOB)
-        ISNULL(vs.VirtualSum, 0) AS VirtualSum
-
-    FROM FullYearQuarters fy
-    LEFT JOIN QuarterlySums qs ON fy.Yr = qs.Yr AND fy.LOB = qs.LOB AND fy.Quarter = qs.Quarter
-    LEFT JOIN SharedServerSum ss ON fy.Yr = ss.Yr AND fy.Quarter = ss.Quarter
-    LEFT JOIN VirtualSumsPerLOB vs ON fy.Yr = vs.Yr AND fy.LOB = vs.LOB AND fy.Quarter = vs.Quarter
-    GROUP BY fy.Yr, fy.LOB, fy.Quarter, ss.CTI_Sum, ss.EET_Sum, ss.TotalVirtualSum, vs.VirtualSum
+VirtualSumsPerLOBYearly AS (
+    SELECT
+        Yr,
+        LOB,
+        SUM(VirtualSum) AS VirtualSum_Yearly
+    FROM VirtualSumsPerLOB
+    GROUP BY Yr, LOB
 )
 
 SELECT
-    Yr,
-    LOB,
+    y.Yr,
+    y.LOB,
 
-    -- Yearly average Physical Quantity (divide sum of quarters by 4)
-    AVG(CASE WHEN LOWER(LOB) = 'eet' THEN PhysicalQty + EET_Sum ELSE PhysicalQty END) AS AvgPhysicalQty,
+    -- PhysicalQty yearly average = sum physical over year / 4
+    CASE
+        WHEN LOWER(y.LOB) = 'eet' THEN
+            (y.PhysicalSum / 4.0) + (ss.EET_Sum_Yearly / 4.0)
+        ELSE
+            (y.PhysicalSum / 4.0)
+    END AS PhysicalQty,
 
-    -- Yearly average Virtual Quantity
-    AVG(VirtualQty) AS AvgVirtualQty,
+    -- VirtualQty yearly average = sum virtual over year / 4
+    (y.VirtualSum / 4.0) AS VirtualQty,
 
-    -- Yearly average Shared Server CTI quantity
-    AVG(SharedServerAvg) AS AvgSharedServerAvg,
+    -- SharedServer CTI yearly average = CTI sum yearly / 4
+    (ss.CTI_Sum_Yearly / 4.0) AS SharedServerAvg,
 
-    -- Yearly average Virtual Add (proportional)
-    AVG(
-        CASE 
-            WHEN TotalVirtualSum > 0 THEN
-                (VirtualSum / TotalVirtualSum) * SharedServerAvg
-            ELSE 0
-        END
-    ) AS AvgVirtualAdd,
+    -- Virtual Add proportional to virtual qty per LOB (yearly)
+    CASE
+        WHEN ss.TotalVirtualSum_Yearly > 0 THEN
+            (v.VirtualSum_Yearly / ss.TotalVirtualSum_Yearly) * (ss.CTI_Sum_Yearly / 4.0)
+        ELSE 0
+    END AS VirtualAdd,
 
-    -- Yearly average Total Quantity = Physical + VirtualAdd (+ EET if LOB = EET)
-    AVG(
-        CASE 
-            WHEN LOWER(LOB) = 'eet' THEN 
-                PhysicalQty + EET_Sum + 
-                CASE 
-                    WHEN TotalVirtualSum > 0 THEN (VirtualSum / TotalVirtualSum) * SharedServerAvg
-                    ELSE 0
-                END
-            ELSE
-                PhysicalQty + 
-                CASE 
-                    WHEN TotalVirtualSum > 0 THEN (VirtualSum / TotalVirtualSum) * SharedServerAvg
-                    ELSE 0
-                END
-        END
-    ) AS AvgTotalQty
+    -- TotalQty yearly average (physical + virtual add + EET if applicable)
+    CASE
+        WHEN LOWER(y.LOB) = 'eet' THEN
+            (y.PhysicalSum / 4.0) +
+            (ss.EET_Sum_Yearly / 4.0) +
+            CASE
+                WHEN ss.TotalVirtualSum_Yearly > 0 THEN
+                    (v.VirtualSum_Yearly / ss.TotalVirtualSum_Yearly) * (ss.CTI_Sum_Yearly / 4.0)
+                ELSE 0
+            END
+        ELSE
+            (y.PhysicalSum / 4.0) +
+            CASE
+                WHEN ss.TotalVirtualSum_Yearly > 0 THEN
+                    (v.VirtualSum_Yearly / ss.TotalVirtualSum_Yearly) * (ss.CTI_Sum_Yearly / 4.0)
+                ELSE 0
+            END
+    END AS TotalQty
 
-FROM QuarterlyComplete
+FROM YearlySums y
+JOIN SharedServerSumYearly ss ON y.Yr = ss.Yr
+LEFT JOIN VirtualSumsPerLOBYearly v ON y.Yr = v.Yr AND y.LOB = v.LOB
 
-GROUP BY Yr, LOB
+WHERE y.LOB <> 'shared server'
 
-ORDER BY Yr, LOB;
+ORDER BY y.Yr, y.LOB;
