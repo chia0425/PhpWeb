@@ -1,0 +1,57 @@
+WITH FilteredLatest AS (
+    SELECT t.*
+    FROM YourTable t
+    CROSS APPLY (
+        SELECT MAX(DateColumn) AS MaxDate
+        FROM YourTable
+        WHERE YEAR(DateColumn) = YEAR(t.DateColumn)
+          AND MONTH(DateColumn) = MONTH(t.DateColumn)
+    ) m
+    WHERE t.DateColumn = m.MaxDate
+      AND YEAR(t.DateColumn) = 2017 -- Change or remove for other years
+),
+
+SharedServerSummary AS (
+    SELECT 
+        YEAR(DateColumn) AS Yr,
+        DATEPART(QUARTER, DateColumn) AS Quarter,
+        SUM(CASE WHEN Type = 'physical server' AND LOB = 'shared server' THEN Quantity ELSE 0 END) AS SharedServerQty,
+        SUM(CASE WHEN Type = 'virtual' THEN Quantity ELSE 0 END) AS TotalVirtualQty
+    FROM FilteredLatest
+    GROUP BY YEAR(DateColumn), DATEPART(QUARTER, DateColumn)
+)
+
+SELECT
+    YEAR(f.DateColumn) AS Yr,
+    DATEPART(QUARTER, f.DateColumn) AS Quarter,
+    f.LOB,
+    SUM(CASE WHEN f.Type = 'physical server' THEN f.Quantity ELSE 0 END) AS PhysicalQty,
+    -- Proportional shared server addition based on virtual server qty
+    SUM(
+        CASE 
+            WHEN f.Type = 'physical server' 
+            THEN ISNULL(
+                (s.SharedServerQty * (CAST(f.Quantity AS FLOAT) / NULLIF(s.TotalVirtualQty, 0))), 0)
+            ELSE 0
+        END
+    ) AS VirtualAdd,
+    -- Total = Physical + VirtualAdd
+    SUM(CASE WHEN f.Type = 'physical server' THEN f.Quantity ELSE 0 END) +
+    SUM(
+        CASE 
+            WHEN f.Type = 'physical server' 
+            THEN ISNULL(
+                (s.SharedServerQty * (CAST(f.Quantity AS FLOAT) / NULLIF(s.TotalVirtualQty, 0))), 0)
+            ELSE 0
+        END
+    ) AS TotalQty
+FROM FilteredLatest f
+JOIN SharedServerSummary s ON
+    YEAR(f.DateColumn) = s.Yr AND DATEPART(QUARTER, f.DateColumn) = s.Quarter
+WHERE f.LOB <> 'shared server'  -- To avoid double counting shared server LOB itself
+GROUP BY
+    YEAR(f.DateColumn),
+    DATEPART(QUARTER, f.DateColumn),
+    f.LOB
+ORDER BY
+    Yr, Quarter, f.LOB;
