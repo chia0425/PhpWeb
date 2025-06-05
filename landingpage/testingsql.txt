@@ -1,0 +1,21 @@
+-- Step 1: Get the latest snapshot date of each month in 2017
+WITH MaxDatesPerMonth AS (
+    SELECT 
+        MAX(DateColumn) AS MaxDate
+    FROM YourTable
+    WHERE DateColumn >= '2017-01-01' AND DateColumn < '2018-01-01'
+    GROUP BY YEAR(DateColumn), MONTH(DateColumn)
+),
+
+-- Step 2: Get all records for the latest snapshot date of each month
+FilteredLatest AS (
+    SELECT t.*
+    FROM YourTable t
+    INNER JOIN MaxDatesPerMonth m
+        ON t.DateColumn = m.MaxDate
+)
+
+-- Step 3: See the resulting filtered data
+SELECT *
+FROM FilteredLatest
+ORDER BY DateColumn;
