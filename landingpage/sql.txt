@@ -1,84 +1,18 @@
-WITH LatestPerMonth AS (
-    SELECT *,
-           ROW_NUMBER() OVER (
-               PARTITION BY YEAR(DateColumn), MONTH(DateColumn)
-               ORDER BY DateColumn DESC
-           ) AS rn
+WITH MaxDatesPerMonth AS (
+    SELECT 
+        YEAR(DateColumn) AS Y,
+        MONTH(DateColumn) AS M,
+        MAX(DateColumn) AS MaxDate
     FROM YourTable
+    GROUP BY YEAR(DateColumn), MONTH(DateColumn)
 ),
 FilteredLatest AS (
-    SELECT *
-    FROM LatestPerMonth
-    WHERE rn = 1
-),
--- Shared-server physical count per snapshot
-SharedPhysical AS (
-    SELECT 
-        DateColumn,
-        Quantity AS SharedQty
-    FROM FilteredLatest
-    WHERE type = 'physical server' AND LOB = 'shared-server'
-),
--- Virtual counts per LOB
-Virtuals AS (
-    SELECT 
-        DateColumn,
-        LOB,
-        Quantity
-    FROM FilteredLatest
-    WHERE type = 'virtual'
-),
--- Total virtual per snapshot
-TotalVirtuals AS (
-    SELECT 
-        DateColumn,
-        SUM(Quantity) AS TotalVirtualQty
-    FROM Virtuals
-    GROUP BY DateColumn
-),
--- Distributed shared qty to each virtual LOB
-SharedDistributed AS (
-    SELECT 
-        v.DateColumn,
-        v.LOB,
-        (CAST(v.Quantity AS FLOAT) / tv.TotalVirtualQty) * sp.SharedQty AS SharedContribution
-    FROM Virtuals v
-    JOIN TotalVirtuals tv ON v.DateColumn = tv.DateColumn
-    JOIN SharedPhysical sp ON v.DateColumn = sp.DateColumn
-),
--- Physical qty per LOB (excluding shared-server)
-Physicals AS (
-    SELECT 
-        DateColumn,
-        LOB,
-        Quantity AS PhysicalQty
-    FROM FilteredLatest
-    WHERE type = 'physical server' AND LOB <> 'shared-server'
-),
--- Combine physical and shared-distributed values
-Combined AS (
-    SELECT 
-        DateColumn,
-        LOB,
-        SUM(ISNULL(p.PhysicalQty, 0) + ISNULL(s.SharedContribution, 0)) AS TotalQty
-    FROM 
-        (SELECT DISTINCT DateColumn, LOB FROM Virtuals
-         UNION
-         SELECT DateColumn, LOB FROM Physicals) base
-    LEFT JOIN Physicals p ON base.DateColumn = p.DateColumn AND base.LOB = p.LOB
-    LEFT JOIN SharedDistributed s ON base.DateColumn = s.DateColumn AND base.LOB = s.LOB
-    GROUP BY base.DateColumn, base.LOB
+    SELECT t.*
+    FROM YourTable t
+    JOIN MaxDatesPerMonth m
+      ON YEAR(t.DateColumn) = m.Y
+     AND MONTH(t.DateColumn) = m.M
+     AND t.DateColumn = m.MaxDate
 )
--- Final output: group by quarter and LOB
-SELECT 
-    DATEPART(YEAR, DateColumn) AS Year,
-    DATEPART(QUARTER, DateColumn) AS Quarter,
-    LOB,
-    SUM(TotalQty) / 3.0 AS AvgMonthlyQty
-FROM Combined
-GROUP BY 
-    DATEPART(YEAR, DateColumn),
-    DATEPART(QUARTER, DateColumn),
-    LOB
-ORDER BY 
-    Year, Quarter, LOB;
+SELECT *
+FROM FilteredLatest
