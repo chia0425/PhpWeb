@@ -1,15 +1,18 @@
-WITH FilteredLatest AS (
+WITH MaxDatesPerMonth AS (
+    SELECT YEAR(DateColumn) AS Yr, MONTH(DateColumn) AS Mth, MAX(DateColumn) AS MaxDate
+    FROM YourTable
+    WHERE YEAR(DateColumn) = 2017
+    GROUP BY YEAR(DateColumn), MONTH(DateColumn)
+),
+FilteredLatest AS (
     SELECT t.*
     FROM YourTable t
-    CROSS APPLY (
-        SELECT MAX(DateColumn) AS MaxDate
-        FROM YourTable
-        WHERE YEAR(DateColumn) = YEAR(t.DateColumn)
-          AND MONTH(DateColumn) = MONTH(t.DateColumn)
-    ) m
-    WHERE t.DateColumn = m.MaxDate
-      AND YEAR(t.DateColumn) = 2017 -- Change or remove for other years
-),
+    INNER JOIN MaxDatesPerMonth md
+        ON YEAR(t.DateColumn) = md.Yr
+       AND MONTH(t.DateColumn) = md.Mth
+       AND t.DateColumn = md.MaxDate
+    WHERE YEAR(t.DateColumn) = 2017
+)
 
 SharedServerSummary AS (
     SELECT 
