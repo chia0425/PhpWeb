@@ -1,21 +1,91 @@
+-- Efficient SQL for 2017 Quarterly Summary with Full Business Logic
+
 -- Step 1: Get the latest snapshot date of each month in 2017
 WITH MaxDatesPerMonth AS (
-    SELECT 
-        MAX(DateColumn) AS MaxDate
+    SELECT MAX(DateColumn) AS MaxDate
     FROM YourTable
     WHERE DateColumn >= '2017-01-01' AND DateColumn < '2018-01-01'
     GROUP BY YEAR(DateColumn), MONTH(DateColumn)
 ),
 
--- Step 2: Get all records for the latest snapshot date of each month
+-- Step 2: Filter records from only those max snapshot dates
 FilteredLatest AS (
     SELECT t.*
     FROM YourTable t
     INNER JOIN MaxDatesPerMonth m
         ON t.DateColumn = m.MaxDate
+),
+
+-- Step 3: Calculate Virtual Shares by LOB
+VirtualShares AS (
+    SELECT
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END AS LOB,
+        SUM(CASE WHEN Type = 'Virtual Server' THEN Quantity ELSE 0 END) AS VirtualQty
+    FROM FilteredLatest
+    GROUP BY 
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END
+),
+
+-- Step 4: Calculate Physical Shared Server Counts
+SharedServer AS (
+    SELECT
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END AS LOB,
+        SUM(CASE WHEN Type = 'Physical Server' AND LOB = 'Shared-Server' THEN Quantity ELSE 0 END) AS SharedPhysicalQty
+    FROM FilteredLatest
+    GROUP BY 
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END
+),
+
+-- Step 5: Calculate Physical Server Quantities
+Physicals AS (
+    SELECT
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END AS LOB,
+        SUM(CASE WHEN Type = 'Physical Server' AND LOB != 'Shared-Server' THEN Quantity ELSE 0 END) AS PhysicalQty
+    FROM FilteredLatest
+    GROUP BY 
+        CASE 
+            WHEN LOB = 'GMT' AND Hostname LIKE '%QZ%' THEN 'GMT-QUARTZ'
+            WHEN LOB = 'GMT' AND Hostname NOT LIKE '%QZ%' THEN 'GMT-NONQUARTZ'
+            ELSE LOB
+        END
+),
+
+-- Step 6: Combine and Calculate Final Adjusted Physical Counts
+FinalCalc AS (
+    SELECT
+        p.LOB,
+        (ISNULL(p.PhysicalQty, 0) + 
+         ISNULL(v.VirtualQty, 0) * 1.0 / NULLIF(SUM(v.VirtualQty) OVER (), 0) * ISNULL(s.SharedPhysicalQty, 0)) AS AdjustedQty
+    FROM Physicals p
+    LEFT JOIN VirtualShares v ON p.LOB = v.LOB
+    LEFT JOIN SharedServer s ON p.LOB = s.LOB
 )
 
--- Step 3: See the resulting filtered data
-SELECT *
-FROM FilteredLatest
-ORDER BY DateColumn;
+-- Step 7: Group by Quarter and Return Final Results
+SELECT
+    LOB,
+    'Q1' AS Quarter,
+    SUM(AdjustedQty) / 3.0 AS AvgMonthlyQty_Q1
+FROM FinalCalc
+GROUP BY LOB
+ORDER BY LOB;
