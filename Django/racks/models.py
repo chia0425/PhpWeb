@@ -17,6 +17,7 @@ class Rack(models.Model):
     datacenter = models.ForeignKey(DataCenter, on_delete=models.CASCADE, related_name='racks')
     name = models.CharField(max_length=100, unique=True)
     total_ru = models.PositiveSmallIntegerField(default=42)
+    original_config = models.JSONField(null=True, blank=True)  # ✅ Make sure this is added
     # caching the largest free block is optional but useful for fast filtering
     largest_free = models.PositiveSmallIntegerField(default=0)
     

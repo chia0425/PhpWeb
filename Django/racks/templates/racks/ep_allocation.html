@@ -1,0 +1,59 @@
+<h2>Original Rack Configuration</h2>
+<table border="1">
+  <tr>
+    <th>Rack</th>
+    <th>Original Slots</th>
+  </tr>
+  {% for rack in racks_info %}
+  <tr>
+    <td>{{ rack.name }}</td>
+    <td>
+      {% for block in rack.original_config %}
+        {{ block.start_ru }}–{{ block.start_ru|add:block.length|add:"-1" }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Device Allocations</h2>
+<table border="1">
+  <tr>
+    <th>Device ID</th>
+    <th>RU Requested</th>
+    <th>Rack Assigned</th>
+    <th>Allocated Slot</th>
+  </tr>
+  {% for alloc in allocations %}
+  <tr>
+    <td>{{ alloc.id }}</td>
+    <td>{{ alloc.ru_req }}</td>
+    <td>{{ alloc.rack|default:"N/A" }}</td>
+    <td>
+      {% if alloc.range %}
+        {{ alloc.range.0 }}–{{ alloc.range.1 }}
+      {% else %}
+        N/A
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>Remaining Free Slots Per Rack</h2>
+<table border="1">
+  <tr>
+    <th>Rack</th>
+    <th>Free Blocks</th>
+  </tr>
+  {% for rack in racks_info %}
+  <tr>
+    <td>{{ rack.name }}</td>
+    <td>
+      {% for block in rack.free_blocks %}
+        {{ block.slot.0 }}–{{ block.slot.1 }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
